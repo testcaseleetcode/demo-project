@@ -8,11 +8,18 @@ pipeline {
 
     stages {
 
-        stage('Build Docker Image (Minikube)') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                eval $(minikube docker-env)
                 docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
+            }
+        }
+
+        stage('Load Image into Minikube') {
+            steps {
+                sh '''
+                minikube image load $IMAGE_NAME:$IMAGE_TAG
                 '''
             }
         }
