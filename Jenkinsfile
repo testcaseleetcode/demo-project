@@ -2,37 +2,37 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "springboot-demo"
-        CONTAINER_NAME = "springboot-container"
+        IMAGE_NAME = "demo-project"
+        IMAGE_TAG = "latest"
     }
 
     stages {
 
-//         stage('Checkout Code') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
-
-        stage('Build Docker Image') {
+        stage('Build Docker Image (Minikube)') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh '''
+                eval $(minikube docker-env)
+                docker build -t $IMAGE_NAME:$IMAGE_TAG .
+                '''
             }
         }
 
-        stage('Run Container') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh 'docker run -d -p 7000:7000 --name $CONTAINER_NAME $IMAGE_NAME'
+                sh '''
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
+                '''
             }
         }
-    }
 
-    post {
-        success {
-            echo '✅ Pipeline executed successfully!'
-        }
-        failure {
-            echo '❌ Pipeline failed!'
+        stage('Verify') {
+            steps {
+                sh '''
+                kubectl get pods
+                kubectl get svc
+                '''
+            }
         }
     }
 }
